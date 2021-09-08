@@ -31,6 +31,8 @@ void ::udp::Client::run()
         if (str == "/ping") {
             std::cout << "Server latency: " << this->getServerLatency() << "ms" << ::std::endl;
             continue;
+        } else if (str == "/exit") {
+            return this->exit();
         }
         this->send(::udp::message::Chat{ str });
         this->receive();
@@ -42,10 +44,18 @@ void ::udp::Client::send(
     const ::udp::AMessage& message
 )
 {
-    m_socket.send_to(
-        ::boost::asio::buffer(&message, sizeof(message)),
-        m_receiverEndpoint
-    );
+    if (message.isImportant()) {
+        do {
+            m_socket.send_to(
+                ::boost::asio::buffer(&message, sizeof(message)),
+                m_receiverEndpoint
+            );
+            this->receive();
+        } while (
+            reinterpret_cast<::udp::AMessage*>(&m_buffer)->getHeader().type
+            != ::udp::AMessage::Header::Type::confirmation
+        );
+    }
 }
 
 void ::udp::Client::receive()
@@ -87,9 +97,20 @@ auto ::udp::Client::getServerLatency()
     this->receive();
     auto end = std::chrono::high_resolution_clock::now();
     if (reinterpret_cast<::udp::AMessage*>(&m_buffer)->getHeader().type
-        !=::udp::AMessage::Header::Type::latency
+        !=::udp::AMessage::Header::Type::confirmation
     ) {
-        throw ::std::runtime_error("expected a ping back from the server");
+        throw ::std::runtime_error("expected a connfirmation from the server");
     }
     return ::std::chrono::duration_cast<::std::chrono::milliseconds>(end - start).count();
+}
+
+void ::udp::Client::exit()
+{
+    this->send(::udp::ping::Exit{});
+    this->receive();
+    if (reinterpret_cast<::udp::AMessage*>(&m_buffer)->getHeader().type
+        !=::udp::AMessage::Header::Type::confirmation
+    ) {
+        throw ::std::runtime_error("expected a connfirmation from the server");
+    }
 }

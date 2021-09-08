@@ -42,6 +42,8 @@ public:
     auto getServerLatency()
         -> float;
 
+    void exit();
+
 
 
 private:

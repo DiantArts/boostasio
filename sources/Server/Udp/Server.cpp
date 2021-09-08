@@ -72,8 +72,11 @@ void ::udp::Server::handleReceive(
 {
     if (!error && bytesReceived > 0) {
         switch (reinterpret_cast<::udp::AMessage*>(&m_buffer)->getHeader().type) {
+        case ::udp::AMessage::Header::Type::exit:
+            this->reply(::udp::ping::Confirmation{});
+            break;
         case ::udp::AMessage::Header::Type::latency:
-            this->reply(::udp::ping::Latency{});
+            this->reply(::udp::ping::Confirmation{});
             break;
         case ::udp::AMessage::Header::Type::chatMessage:
             this->reply(*reinterpret_cast<udp::message::Chat*>(&m_buffer));

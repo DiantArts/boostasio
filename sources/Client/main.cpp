@@ -1,6 +1,8 @@
 #include <pch.hpp>
 #include <Client/Udp/Client.hpp>
 
+#include <Udp/Packet/Types.hpp>
+
 
 
 int main(int argc, char **argv)

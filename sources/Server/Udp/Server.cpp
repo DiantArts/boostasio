@@ -1,102 +1,116 @@
 #include <pch.hpp>
 #include <Server/Udp/Server.hpp>
-#include <Udp/MessageTypes.hpp>
+#include <Udp/Packet/Types.hpp>
 
 
 
 // ------------------------------------------------------------------ *structors
 
 ::udp::Server::Server(
-    ::boost::asio::io_context& ioContext,
     const int port
 )
-    : m_ioContext{ ioContext }
-    , m_socket{ m_ioContext, ::boost::asio::ip::udp::endpoint(::boost::asio::ip::udp::v4(), port) }
+    : m_socket{ m_ioContext, ::boost::asio::ip::udp::endpoint(::boost::asio::ip::udp::v4(), port) }
 {
-    m_socket.async_receive_from(
-        boost::asio::buffer(m_buffer, this->maxLength),
-        m_senderEndpoint,
-        boost::bind(
-            &Server::handleReceive,
-            this,
-            boost::asio::placeholders::error,
-            boost::asio::placeholders::bytes_transferred
-        )
-    );
+    this->startReceive();
 }
 
 ::udp::Server::~Server() = default;
 
 
 
-// ------------------------------------------------------------------ methods
+// ------------------------------------------------------------------ run
+
+void ::udp::Server::run()
+{
+    ::std::cout << "> SERVER START <" << ::std::endl;
+    m_ioContext.run();
+    ::std::cout << "> EXIT SERVER <" << ::std::endl;
+}
+
+
+
+// ------------------------------------------------------------------ send
+
+void ::udp::Server::send(
+    const ::udp::packet::Text& message,
+    ::boost::asio::ip::udp::endpoint endpoint
+)
+{
+    // actual reply
+    m_socket.async_send_to(
+        ::boost::asio::buffer(&message, message.getSize()),
+        endpoint,
+        ::boost::bind(
+            &Server::startReceive,
+            this
+        )
+    );
+
+    // display the message sent
+    message.display("->");
+}
+
+void ::udp::Server::send(
+    const ::udp::APacket& message,
+    ::boost::asio::ip::udp::endpoint endpoint
+)
+{
+    // actual reply
+    m_socket.async_send_to(
+        ::boost::asio::buffer(&message, message.getSize()),
+        endpoint,
+        ::boost::bind(
+            &Server::startReceive,
+            this
+        )
+    );
+
+    // display the message sent
+    message.display("->");
+}
 
 void ::udp::Server::reply(
-    const ::udp::AMessage& message
+    const ::udp::APacket& message
 )
 {
-    m_socket.async_send_to(
-        boost::asio::buffer(&message, message.getHeader().size + message.getHeaderSize()),
-        m_senderEndpoint,
-        boost::bind(
-            &Server::startReceive,
-            this,
-            boost::asio::placeholders::error,
-            boost::asio::placeholders::bytes_transferred
-        )
-    );
+    this->send(message, m_senderEndpoint);
 }
 
 
-void ::udp::Server::startReceive(
-    const boost::system::error_code& error,
-    const ::std::size_t bytesSent
-)
+
+// ------------------------------------------------------------------ receive
+
+void ::udp::Server::startReceive()
 {
+    // actual receive
     m_socket.async_receive_from(
-        boost::asio::buffer(m_buffer, maxLength),
+        ::boost::asio::buffer(m_buffer, this->bufferLength),
         m_senderEndpoint,
-        boost::bind(
+        ::boost::bind(
             &Server::handleReceive,
-            this,
-            boost::asio::placeholders::error,
-            boost::asio::placeholders::bytes_transferred
+            this
         )
     );
 }
 
-void ::udp::Server::handleReceive(
-    const boost::system::error_code& error,
-    const ::std::size_t bytesReceived
-)
+void ::udp::Server::handleReceive()
 {
-    if (!error && bytesReceived > 0) {
-        switch (reinterpret_cast<::udp::AMessage*>(&m_buffer)->getHeader().type) {
-        case ::udp::AMessage::Header::Type::exit:
-            this->reply(::udp::ping::Confirmation{});
+    // display the received message
+    reinterpret_cast<::udp::APacket*>(&m_buffer)->display("<-");
+
+    // special interactions
+    switch (reinterpret_cast<::udp::APacket*>(&m_buffer)->getType()) {
+    case ::udp::APacket::Header::Type::text:
+        {
+            auto& text{ *reinterpret_cast<udp::packet::Text*>(&m_buffer) };
+            text.assignNewId();
+            this->reply(text);
             break;
-        case ::udp::AMessage::Header::Type::latency:
-            this->reply(::udp::ping::Confirmation{});
-            break;
-        case ::udp::AMessage::Header::Type::chatMessage:
-            this->reply(*reinterpret_cast<udp::message::Chat*>(&m_buffer));
-            break;
-        default:
-            this->reply(::udp::message::Error{ ::udp::message::Error::Type::unknown });
         }
-        if (reinterpret_cast<::udp::AMessage*>(&m_buffer)->isImportant()) {
-            this->reply(::udp::ping::Confirmation{});
-        }
-    } else {
-        m_socket.async_receive_from(
-            boost::asio::buffer(m_buffer, this->maxLength),
-            m_senderEndpoint,
-            boost::bind(
-                &Server::handleReceive,
-                this,
-                boost::asio::placeholders::error,
-                boost::asio::placeholders::bytes_transferred
-            )
-        );
+    default:
+        break;
     }
+
+    // special interaction
+    this->startReceive();
 }

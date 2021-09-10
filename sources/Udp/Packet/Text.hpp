@@ -1,20 +1,20 @@
 #pragma once
 
-#include <Udp/AMessage.hpp>
+#include <Udp/Packet/APacket.hpp>
 
 
 
-namespace udp::message {
+namespace udp::packet {
 
 
 
-class Chat
-    : public ::udp::AMessage
+class Text
+    : public ::udp::APacket
 {
 
 public:
 
-    using Data = ::std::array<char, AMessage::Header::maxSize - Chat::getHeaderSize()>;
+    using Data = ::std::array<char, udp::APacket::getMaxSize() - udp::APacket::getMaxHeaderSize()>;
 
 
 
@@ -22,40 +22,41 @@ public:
 
     // ------------------------------------------------------------------ *structors
 
-    Chat(
+    Text(
         const ::std::string& message
     );
 
-    Chat(
+    Text(
         const ::std::string& message,
-        const uint8_t& position
+        const ::std::size_t& position
     );
 
-    ~Chat();
+    ~Text();
 
 
 
     // ------------------------------------------------------------------ data
 
     [[ nodiscard ]] auto getRawData() const
-        -> const Chat::Data&;
+        -> const Text::Data&;
 
     [[ nodiscard ]] auto getDataAsString() const
         -> ::std::string;
 
     [[ nodiscard ]] operator ::std::string() const;
 
-    [[ nodiscard ]] operator const char*() const;
+    [[ nodiscard ]] auto toString() const
+        -> ::std::string;
 
 
 
 private:
 
-    Chat::Data m_data;
+    Text::Data m_data;
 
 };
 
 
 
 
-} // namespace udp::message
+} // namespace udp::packet

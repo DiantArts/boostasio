@@ -6,15 +6,13 @@
 int main(int argc, char **argv)
 {
     try {
+
         if (argc != 2) {
             std::cerr << "Usage: client <host>" << std::endl;
             return EXIT_FAILURE;
         }
-        ::boost::asio::io_context ioContext;
-        ::udp::Server server{ ioContext, 8080 };
-        ::std::cout << "> SERVER START <" << ::std::endl;
-        ioContext.run();
-        ::std::cout << "> EXIT SERVER <" << ::std::endl;
+        ::udp::Server server{ ::std::atoi(argv[1]) };
+        server.run();
         return EXIT_SUCCESS;
 
     } catch (const ::std::exception& e) {

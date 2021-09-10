@@ -1,6 +1,6 @@
 #include <pch.hpp>
 #include <Client/Udp/Client.hpp>
-#include <Udp/MessageTypes.hpp>
+#include <Udp/Packet/Types.hpp>
 
 
 
@@ -10,9 +10,11 @@
     const ::std::string& host,
     const ::std::string& port
 )
-    : m_resolver{ m_ioService }
-    , m_receiverEndpoint{ *m_resolver.resolve(::boost::asio::ip::udp::v4(), host, port) }
-    , m_socket{ m_ioService }
+    : m_endpoint{
+        ::boost::asio::ip::address::from_string(host),
+        static_cast<short unsigned int>(::std::atoi(port.c_str()))
+    }
+    , m_socket{ m_ioContext }
 {
     m_socket.open(::boost::asio::ip::udp::v4());
 }
@@ -21,96 +23,79 @@
 
 
 
-// ------------------------------------------------------------------ methods
+// ------------------------------------------------------------------ run
 
 void ::udp::Client::run()
 {
+    ::std::thread senderThread{ &Client::startSend, this };
+    this->startReceive();
+    ::std::cout << "> CLIENT START <" << ::std::endl;
+    m_ioContext.run();
+    ::std::cout << "> EXIT CLIENT <" << ::std::endl;
+    senderThread.join();
+}
+
+
+
+// ------------------------------------------------------------------ send
+
+void ::udp::Client::startSend()
+{
     while (true) {
+        ::std::cout << "Input: " << ::std::flush;
         ::std::string str;
         ::std::getline(::std::cin, str);
-        if (str == "/ping") {
-            std::cout << "Server latency: " << this->getServerLatency() << "ms" << ::std::endl;
-            continue;
-        } else if (str == "/exit") {
-            return this->exit();
+        if (str == "/exit") {
+            this->handleSend(::udp::packet::Exit{});
         }
-        this->send(::udp::message::Chat{ str });
-        this->receive();
-        this->handleResponse();
+        ::udp::packet::Text message{ str };
+        char* data{ (char*)&message };
+        this->handleSend(message);
     }
 }
 
-void ::udp::Client::send(
-    const ::udp::AMessage& message
+void ::udp::Client::handleSend(
+    const ::udp::APacket& message
 )
 {
-    if (message.isImportant()) {
-        do {
-            m_socket.send_to(
-                ::boost::asio::buffer(&message, sizeof(message)),
-                m_receiverEndpoint
-            );
-            this->receive();
-        } while (
-            reinterpret_cast<::udp::AMessage*>(&m_buffer)->getHeader().type
-            != ::udp::AMessage::Header::Type::confirmation
-        );
-    }
+    message.display("->");
+    m_socket.send_to(
+        ::boost::asio::buffer(&message, message.getSize()),
+        m_endpoint
+    );
 }
 
-void ::udp::Client::receive()
-{
 
-    ::boost::asio::ip::udp::endpoint senderEndpoint;
-    m_socket.receive_from(::boost::asio::buffer(m_buffer), senderEndpoint);
+
+// ------------------------------------------------------------------ receive
+
+void ::udp::Client::startReceive()
+{
+    m_socket.async_receive_from(
+        ::boost::asio::buffer(m_buffer, this->bufferLength),
+        m_endpoint,
+        ::boost::bind(
+            &Client::handleResponse,
+            this
+        )
+    );
 }
 
 void ::udp::Client::handleResponse()
 {
-    switch (reinterpret_cast<::udp::AMessage*>(&m_buffer)->getHeader().type) {
-    case ::udp::AMessage::Header::Type::latency:
+    ::std::cout << '\r';
+    reinterpret_cast<::udp::APacket*>(&m_buffer)->display("<-");
+    ::std::cout << "Input: " << ::std::flush;
+
+    // special interactions
+    switch (reinterpret_cast<::udp::APacket*>(&m_buffer)->getHeader().type) {
+    case ::udp::APacket::Header::Type::ping:
         ::std::cout << "[System]: just received a ping" << ::std::endl;
         break;
-    case ::udp::AMessage::Header::Type::chatMessage:
-        ::std::cout << "Server: " << *reinterpret_cast<udp::message::Chat*>(&m_buffer) << ::std::endl;
+    case ::udp::APacket::Header::Type::error:
+        ::std::cout << reinterpret_cast<udp::packet::Error*>(&m_buffer)->toString() << ::std::endl;
         break;
-    case ::udp::AMessage::Header::Type::error:
-        ::std::cout << reinterpret_cast<udp::message::Error*>(&m_buffer)->toString() << ::std::endl;
-        break;
-    default:
-        ::std::cout << "[System]: unknown response" << ::std::endl;
+    default: break;
     }
-    if (reinterpret_cast<::udp::AMessage*>(&m_buffer)->isImportant()) {
-        this->send(::udp::ping::Confirmation{});
-    }
-}
-
-
-
-// ------------------------------------------------------------------ action
-
-auto ::udp::Client::getServerLatency()
-    -> float
-{
-    this->send(::udp::ping::Latency{});
-    auto start = std::chrono::high_resolution_clock::now();
-    this->receive();
-    auto end = std::chrono::high_resolution_clock::now();
-    if (reinterpret_cast<::udp::AMessage*>(&m_buffer)->getHeader().type
-        !=::udp::AMessage::Header::Type::confirmation
-    ) {
-        throw ::std::runtime_error("expected a connfirmation from the server");
-    }
-    return ::std::chrono::duration_cast<::std::chrono::milliseconds>(end - start).count();
-}
-
-void ::udp::Client::exit()
-{
-    this->send(::udp::ping::Exit{});
-    this->receive();
-    if (reinterpret_cast<::udp::AMessage*>(&m_buffer)->getHeader().type
-        !=::udp::AMessage::Header::Type::confirmation
-    ) {
-        throw ::std::runtime_error("expected a connfirmation from the server");
-    }
+    this->startReceive();
 }

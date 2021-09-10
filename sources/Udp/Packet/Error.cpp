@@ -1,30 +1,30 @@
 #include <pch.hpp>
-#include <Udp/Message/Error.hpp>
+#include <Udp/Packet/Error.hpp>
 
 
 
 // ------------------------------------------------------------------ *structors
 
-::udp::message::Error::Error(
+::udp::packet::Error::Error(
     Error::Type type
 )
-    : ::udp::AMessage{ ::udp::AMessage::Header::Type::error, 0, false }
+    : ::udp::APacket{ ::udp::APacket::Header::Type::error, 0, false, 0 }
     , m_errorType{ type }
 {}
 
-::udp::message::Error::~Error() = default;
+::udp::packet::Error::~Error() = default;
 
 
 
 // ------------------------------------------------------------------ informations
 
-auto ::udp::message::Error::getId() const
+auto ::udp::packet::Error::getId() const
     -> Error::Type
 {
     return m_errorType;
 }
 
-auto ::udp::message::Error::toString() const
+auto ::udp::packet::Error::toString() const
     -> ::std::string
 {
     return this->errorMessages[static_cast<::std::size_t>(m_errorType)];

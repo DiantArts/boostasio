@@ -1,15 +1,15 @@
 #pragma once
 
-#include <Udp/AMessage.hpp>
+#include <Udp/Packet/APacket.hpp>
 
 
 
-namespace udp::ping {
+namespace udp::packet {
 
 
 
 class Exit
-    : public ::udp::AMessage
+    : public ::udp::APacket
 {
 
 public:
@@ -29,4 +29,4 @@ private:
 
 
 
-} // namespace udp::ping
+} // namespace udp::packet

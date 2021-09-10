@@ -1,6 +1,9 @@
 #pragma once
 
-namespace udp { class AMessage; }
+#include <Udp/Packet/APacket.hpp>
+
+
+namespace udp::packet { class Text; }
 
 
 
@@ -23,36 +26,38 @@ public:
 
 
 
-    // ------------------------------------------------------------------ methods
+    // ------------------------------------------------------------------ run
 
     void run();
 
-    void send(
-        const ::udp::AMessage& message
+
+
+    // ------------------------------------------------------------------ send
+
+    void startSend();
+
+    void handleSend(
+        const ::udp::APacket& message
     );
 
-    void receive();
+
+
+    // ------------------------------------------------------------------ receive
+
+    void startReceive();
 
     void handleResponse();
 
 
 
-    // ------------------------------------------------------------------ action
-
-    auto getServerLatency()
-        -> float;
-
-    void exit();
-
-
-
 private:
 
-    ::boost::asio::io_service m_ioService;
-    ::boost::asio::ip::udp::resolver m_resolver;
-    ::boost::asio::ip::udp::endpoint m_receiverEndpoint;
+    ::boost::asio::io_context m_ioContext;
+    ::boost::asio::ip::udp::endpoint m_endpoint;
     ::boost::asio::ip::udp::socket m_socket;
-    ::std::array<::std::byte, 254> m_buffer;
+
+    static inline constexpr ::std::size_t bufferLength{ 254 };
+    ::std::array<::std::byte, Client::bufferLength> m_buffer;
 
 };
 

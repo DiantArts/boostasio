@@ -1,12 +1,12 @@
 #include <pch.hpp>
-#include <Client/Udp/Connection.hpp>
-#include <Udp/Packet/Types.hpp>
+#include <Client/Connection.hpp>
+#include <Packet/Types.hpp>
 
 
 
 // ------------------------------------------------------------------ *structors
 
-::udp::Connection::Connection(
+::client::Connection::Connection(
     const ::std::string& host,
     const ::std::string& port,
     const ::std::size_t pingFrequencyAsMs
@@ -21,19 +21,19 @@
     m_socket.open(::boost::asio::ip::udp::v4());
 }
 
-::udp::Connection::~Connection() = default;
+::client::Connection::~Connection() = default;
 
 
 
 // ------------------------------------------------------------------ methods
 
-auto ::udp::Connection::isValid() const
+auto ::client::Connection::isValid() const
     -> bool
 {
     return m_isRunning;
 }
 
-auto ::udp::Connection::getLatency() const
+auto ::client::Connection::getLatency() const
     -> ::std::size_t
 {
     return m_latency;
@@ -43,8 +43,8 @@ auto ::udp::Connection::getLatency() const
 
 // ------------------------------------------------------------------ send
 
-void ::udp::Connection::send(
-    const ::udp::APacket& message
+void ::client::Connection::send(
+    const ::APacket& message
 )
 {
     // debug
@@ -59,14 +59,14 @@ void ::udp::Connection::send(
 
 // ------------------------------------------------------------------ receive
 
-void ::udp::Connection::startReceive(
-    ::std::function<void(::udp::APacket&)>&& func
+void ::client::Connection::startReceive(
+    ::std::function<void(::APacket&)>&& func
 )
 {
     if (m_userReceiveFunc) {
         throw ::std::runtime_error(::std::string(__FUNCTION__) + " has already been call");
     }
-    m_userReceiveFunc = ::std::make_unique<::std::function<void(::udp::APacket&)>>(::std::move(func));
+    m_userReceiveFunc = ::std::make_unique<::std::function<void(::APacket&)>>(::std::move(func));
     m_receiverThread = ::std::make_unique<::std::thread>(
         [this, &func](){ this->startReceiveImpl(); m_ioContext.run(); }
     );
@@ -75,7 +75,7 @@ void ::udp::Connection::startReceive(
     );
 }
 
-void ::udp::Connection::stopReceive()
+void ::client::Connection::stopReceive()
 {
     m_isRunning = false;
     m_ioContext.stop();
@@ -85,7 +85,7 @@ void ::udp::Connection::stopReceive()
     m_maintainConnectionThread.reset();
 }
 
-void ::udp::Connection::startReceiveImpl(
+void ::client::Connection::startReceiveImpl(
 )
 {
     m_socket.async_receive_from(
@@ -95,27 +95,27 @@ void ::udp::Connection::startReceiveImpl(
     );
 }
 
-void ::udp::Connection::prehandleMessage()
+void ::client::Connection::prehandleMessage()
 {
     // debug
     ::std::cout << '\r';
-    reinterpret_cast<::udp::APacket*>(&m_buffer)->display("<-");
+    reinterpret_cast<::APacket*>(&m_buffer)->display("<-");
     ::std::cout << "Input: " << ::std::flush;
 
     // special interactions
-    switch (reinterpret_cast<::udp::APacket*>(&m_buffer)->getHeader().type) {
-    case ::udp::APacket::Header::Type::ping:
+    switch (reinterpret_cast<::APacket*>(&m_buffer)->getHeader().type) {
+    case ::APacket::Header::Type::ping:
         m_isPingValidated = true;
         m_latency = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             std::chrono::high_resolution_clock::now() - m_pingTimepoint
         ).count();
         break;
-    case ::udp::APacket::Header::Type::error:
-        ::std::cout << reinterpret_cast<udp::packet::Error*>(&m_buffer)->toString() << ::std::endl;
+    case ::APacket::Header::Type::error:
+        ::std::cout << reinterpret_cast<::packet::Error*>(&m_buffer)->toString() << ::std::endl;
         break;
     default:
         // user defined behaviours
-        (*m_userReceiveFunc)(*reinterpret_cast<udp::packet::Error*>(&m_buffer));
+        (*m_userReceiveFunc)(*reinterpret_cast<::packet::Error*>(&m_buffer));
     }
 
     this->startReceiveImpl();
@@ -125,11 +125,11 @@ void ::udp::Connection::prehandleMessage()
 
 // ------------------------------------------------------------------ connection
 
-void ::udp::Connection::maintainConnection()
+void ::client::Connection::maintainConnection()
 {
     do {
         m_isPingValidated = false;
-        this->send(::udp::packet::Ping{});
+        this->send(::packet::Ping{});
         m_pingTimepoint = std::chrono::high_resolution_clock::now();
         ::std::this_thread::sleep_for(::std::chrono::milliseconds(m_pingFrequency));
     } while (m_isPingValidated && m_isRunning);

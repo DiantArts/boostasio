@@ -1,13 +1,13 @@
 #pragma once
 
-#include <Udp/Packet/APacket.hpp>
+#include <Packet/APacket.hpp>
 
 
-namespace udp::packet { class Text; }
+namespace packet { class Text; }
 
 
 
-namespace udp {
+namespace client {
 
 
 
@@ -15,7 +15,7 @@ class Connection {
 
 public:
 
-    using PacketType = ::udp::APacket;
+    using PacketType = ::APacket;
 
 
 
@@ -54,7 +54,7 @@ public:
     // ------------------------------------------------------------------ receive
 
     void startReceive(
-        ::std::function<void(::udp::APacket&)>&& func
+        ::std::function<void(::APacket&)>&& func
     );
 
     void stopReceive();
@@ -89,7 +89,7 @@ private:
     // ------------------------------------------------------------------ receive
     static inline constexpr ::std::size_t bufferLength{ 254 };
     ::std::array<::std::byte, Connection::bufferLength> m_buffer;
-    ::std::unique_ptr<::std::function<void(::udp::APacket&)>> m_userReceiveFunc;
+    ::std::unique_ptr<::std::function<void(::APacket&)>> m_userReceiveFunc;
 
 
     // ------------------------------------------------------------------ ping
@@ -103,4 +103,4 @@ private:
 
 
 
-} // namespace udp
+} // namespace client

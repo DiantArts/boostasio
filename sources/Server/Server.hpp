@@ -1,12 +1,10 @@
 #pragma once
 
-#include <Server/Udp/Connection.hpp>
-
-namespace udp::packet { class Text; }
+#include <Server/Connection.hpp>
 
 
 
-namespace udp {
+namespace server {
 
 
 
@@ -33,17 +31,19 @@ public:
     // ------------------------------------------------------------------ receive
 
     void handleReceive(
-        ::udp::APacket& message
+        ::APacket& message
     );
 
 
 
 private:
 
-    ::udp::Connection m_clientsConnection;
+    ::server::Connection m_clientsConnection;
 
 };
 
 
 
-} // namespace udp
+} // namespace server
+
+using Server = ::server::Server;

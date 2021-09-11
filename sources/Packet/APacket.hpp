@@ -4,7 +4,7 @@
 
 
 
-namespace udp::packet {
+namespace packet {
 
 
 
@@ -135,6 +135,6 @@ private:
 
 
 
-} // namespace udp::packet
+} // namespace packet
 
-namespace udp { using APacket = ::udp::packet::APacket; }
+using APacket = ::packet::APacket;

@@ -1,24 +1,24 @@
 #include <pch.hpp>
-#include <Server/Udp/Server.hpp>
-#include <Udp/Packet/Types.hpp>
+#include <Server/Server.hpp>
+#include <Packet/Types.hpp>
 
 
 
 // ------------------------------------------------------------------ *structors
 
-::udp::Server::Server(
+::server::Server::Server(
     const int port
 )
     : m_clientsConnection{ port }
 {}
 
-::udp::Server::~Server() = default;
+::server::Server::~Server() = default;
 
 
 
 // ------------------------------------------------------------------ run
 
-void ::udp::Server::run()
+void ::server::Server::run()
 {
     ::std::cout << "> SERVER START <" << ::std::endl;
     m_clientsConnection.startReceive(
@@ -31,12 +31,12 @@ void ::udp::Server::run()
 
 // ------------------------------------------------------------------ receive
 
-void ::udp::Server::handleReceive(
-    ::udp::APacket& message
+void ::server::Server::handleReceive(
+    ::APacket& message
 )
 {
     switch (message.getType()) {
-    case ::udp::APacket::Header::Type::text:
+    case ::APacket::Header::Type::text:
         message.assignNewId();
         m_clientsConnection.reply(message);
         break;

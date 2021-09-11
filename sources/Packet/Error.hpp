@@ -1,15 +1,15 @@
 #pragma once
 
-#include <Udp/Packet/APacket.hpp>
+#include <Packet/APacket.hpp>
 
 
 
-namespace udp::packet {
+namespace packet {
 
 
 
 class Error
-    : public ::udp::APacket
+    : public ::APacket
 {
 
 public:
@@ -55,4 +55,4 @@ private:
 
 
 
-} // namespace udp::packet
+} // namespace packet

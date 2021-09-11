@@ -1,15 +1,15 @@
 #pragma once
 
-#include <Udp/Packet/APacket.hpp>
+#include <Packet/APacket.hpp>
 
 
 
-namespace udp::packet {
+namespace packet {
 
 
 
 class Loss
-    : public ::udp::APacket
+    : public ::APacket
 {
 
 public:

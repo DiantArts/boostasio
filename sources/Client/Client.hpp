@@ -1,13 +1,13 @@
 #pragma once
 
-#include <Client/Udp/Connection.hpp>
+#include <Client/Connection.hpp>
 
 
-namespace udp::packet { class Text; }
+namespace packet { class Text; }
 
 
 
-namespace udp {
+namespace client {
 
 
 
@@ -37,17 +37,19 @@ public:
     void startSend();
 
     void handleReceive(
-        ::udp::Connection::PacketType& message
+        ::client::Connection::PacketType& message
     );
 
 
 
 private:
 
-    ::udp::Connection m_connectionToServer;
+    ::client::Connection m_connectionToServer;
 
 };
 
 
 
-} // namespace udp
+} // namespace client
+
+using Client = ::client::Client;

@@ -1,7 +1,5 @@
 #include <pch.hpp>
-#include <Client/Udp/Client.hpp>
-
-#include <Udp/Packet/Types.hpp>
+#include <Client/Client.hpp>
 
 
 
@@ -12,7 +10,7 @@ int main(int argc, char **argv)
             std::cerr << "Usage: client <host> <port>" << std::endl;
             return EXIT_FAILURE;
         }
-        ::udp::Client client(argv[1], "8080");
+        ::Client client(argv[1], "8080");
         client.run();
         ::std::cout << "> EXIT CLIENT <" << ::std::endl;
         return EXIT_SUCCESS;

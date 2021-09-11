@@ -1,25 +1,25 @@
 #include <pch.hpp>
-#include <Server/Udp/Connection.hpp>
-#include <Udp/Packet/Types.hpp>
+#include <Server/Connection.hpp>
+#include <Packet/Types.hpp>
 
 
 
 // ------------------------------------------------------------------ *structors
 
-::udp::Connection::Connection(
+::server::Connection::Connection(
     const int port
 )
     : m_socket{ m_ioContext, ::boost::asio::ip::udp::endpoint(::boost::asio::ip::udp::v4(), port) }
 {}
 
-::udp::Connection::~Connection() = default;
+::server::Connection::~Connection() = default;
 
 
 
 // ------------------------------------------------------------------ send
 
-void ::udp::Connection::send(
-    const ::udp::APacket& message,
+void ::server::Connection::send(
+    const ::APacket& message,
     ::boost::asio::ip::udp::endpoint endpoint
 )
 {
@@ -37,8 +37,8 @@ void ::udp::Connection::send(
     );
 }
 
-void ::udp::Connection::reply(
-    const ::udp::APacket& message
+void ::server::Connection::reply(
+    const ::APacket& message
 )
 {
     this->send(message, m_lastSenderEndpoint);
@@ -48,19 +48,24 @@ void ::udp::Connection::reply(
 
 // ------------------------------------------------------------------ receive
 
-void ::udp::Connection::startReceive(
-    ::std::function<void(::udp::APacket&)>&& func
+void ::server::Connection::startReceive(
+    ::std::function<void(::APacket&)>&& func
 )
 {
     if (m_userReceiveFunc) {
         throw ::std::runtime_error(::std::string(__FUNCTION__) + " has already been call");
     }
-    m_userReceiveFunc = ::std::make_unique<::std::function<void(::udp::APacket&)>>(::std::move(func));
+    m_userReceiveFunc = ::std::make_unique<::std::function<void(::APacket&)>>(::std::move(func));
     this->startReceiveImpl();
     m_ioContext.run();
 }
 
-void ::udp::Connection::startReceiveImpl()
+void ::Server::Connection::stopReceive()
+{
+    m_ioContext.stop();
+}
+
+void ::server::Connection::startReceiveImpl()
 {
     // actual receive
     m_socket.async_receive_from(
@@ -73,18 +78,18 @@ void ::udp::Connection::startReceiveImpl()
     );
 }
 
-void ::udp::Connection::prehandleReceive()
+void ::server::Connection::prehandleReceive()
 {
     // display the received message
-    reinterpret_cast<::udp::APacket*>(&m_buffer)->display("<-");
+    reinterpret_cast<::APacket*>(&m_buffer)->display("<-");
 
     // special interactions
-    if (reinterpret_cast<::udp::APacket*>(&m_buffer)->getType() == ::udp::APacket::Header::Type::ping) {
-        this->reply(*reinterpret_cast<udp::packet::APacket*>(&m_buffer));
+    if (reinterpret_cast<::APacket*>(&m_buffer)->getType() == ::APacket::Header::Type::ping) {
+        this->reply(*reinterpret_cast<APacket*>(&m_buffer));
     }
 
     // user defined behaviours
-    (*m_userReceiveFunc)(*reinterpret_cast<udp::packet::Error*>(&m_buffer));
+    (*m_userReceiveFunc)(*reinterpret_cast<packet::Error*>(&m_buffer));
 
     // special interaction
     this->startReceiveImpl();

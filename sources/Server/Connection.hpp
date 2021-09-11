@@ -1,12 +1,12 @@
 #pragma once
 
-#include <Udp/Packet/APacket.hpp>
+#include <Packet/APacket.hpp>
 
-namespace udp::packet { class Text; }
+namespace packet { class Text; }
 
 
 
-namespace udp {
+namespace server {
 
 
 
@@ -27,12 +27,12 @@ public:
     // ------------------------------------------------------------------ send
 
     void send(
-        const ::udp::APacket& message,
+        const ::APacket& message,
         ::boost::asio::ip::udp::endpoint endpoint
     );
 
     void reply(
-        const ::udp::APacket& message
+        const ::APacket& message
     );
 
 
@@ -40,8 +40,10 @@ public:
     // ------------------------------------------------------------------ receive
 
     void startReceive(
-        ::std::function<void(::udp::APacket&)>&& func
+        ::std::function<void(::APacket&)>&& func
     );
+
+    void stopReceive();
 
 
 
@@ -59,7 +61,7 @@ private:
     ::boost::asio::ip::udp::socket m_socket;
     ::boost::asio::ip::udp::endpoint m_lastSenderEndpoint;
 
-    ::std::unique_ptr<::std::function<void(::udp::APacket&)>> m_userReceiveFunc;
+    ::std::unique_ptr<::std::function<void(::APacket&)>> m_userReceiveFunc;
 
     static inline constexpr ::std::size_t bufferLength{ 254 };
     ::std::array<::std::byte, Connection::bufferLength> m_buffer;
@@ -68,4 +70,4 @@ private:
 
 
 
-} // namespace udp
+} // namespace server

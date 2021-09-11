@@ -1,5 +1,5 @@
 #include <pch.hpp>
-#include <Server/Udp/Server.hpp>
+#include <Server/Server.hpp>
 
 
 
@@ -11,7 +11,7 @@ int main(int argc, char **argv)
             std::cerr << "Usage: client <host>" << std::endl;
             return EXIT_FAILURE;
         }
-        ::udp::Server server{ ::std::atoi(argv[1]) };
+        ::Server server{ ::std::atoi(argv[1]) };
         server.run();
         return EXIT_SUCCESS;
 

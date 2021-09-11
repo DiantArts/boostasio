@@ -1,51 +1,51 @@
 #include <pch.hpp>
-#include <Udp/Packet/Text.hpp>
+#include <Packet/Text.hpp>
 
 
 
 // ------------------------------------------------------------------ *structors
 
-::udp::packet::Text::Text(
+::packet::Text::Text(
     const ::std::string& message
 )
-    : ::udp::APacket{ ::udp::APacket::Header::Type::text, message.size(), true, 0 }
+    : ::APacket{ ::APacket::Header::Type::text, message.size(), true, 0 }
 {
     ::std::memmove(m_data.data(), message.data(), message.size());
 }
 
-::udp::packet::Text::Text(
+::packet::Text::Text(
     const ::std::string& message,
     const ::std::size_t& position
 )
-    : ::udp::APacket{ ::udp::APacket::Header::Type::text, message.size(), true, position }
+    : ::APacket{ ::APacket::Header::Type::text, message.size(), true, position }
 {
     ::std::memmove(m_data.data(), message.data(), message.size());
 }
 
-::udp::packet::Text::~Text() = default;
+::packet::Text::~Text() = default;
 
 
 
 // ------------------------------------------------------------------ data
 
-auto ::udp::packet::Text::getRawData() const
+auto ::packet::Text::getRawData() const
     -> const Text::Data&
 {
     return m_data;
 }
 
-auto ::udp::packet::Text::getDataAsString() const
+auto ::packet::Text::getDataAsString() const
     -> ::std::string
 {
     return ::std::string{ m_data.data(), this->getBodySize() };
 }
 
-::udp::packet::Text::operator ::std::string() const
+::packet::Text::operator ::std::string() const
 {
     return ::std::string{ m_data.data(), this->getBodySize() };
 }
 
-[[ nodiscard ]] auto ::udp::packet::Text::toString() const
+[[ nodiscard ]] auto ::packet::Text::toString() const
     -> ::std::string
 {
     return ::std::string{ m_data.data(), this->getBodySize() };

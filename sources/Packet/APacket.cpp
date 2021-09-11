@@ -1,12 +1,12 @@
 #include <pch.hpp>
-#include <Udp/Packet/APacket.hpp>
-#include <Udp/Packet/Text.hpp>
+#include <Packet/APacket.hpp>
+#include <Packet/Text.hpp>
 
 
 
 // ------------------------------------------------------------------ *structors
 
-::udp::packet::APacket::APacket(
+::packet::APacket::APacket(
     APacket::Header::Type type,
     ::std::size_t bodySize,
     const bool isImportant,
@@ -20,55 +20,55 @@
     }
 {}
 
-::udp::packet::APacket::~APacket() = default;
+::packet::APacket::~APacket() = default;
 
 
 
 // ------------------------------------------------------------------ informations
 
-auto ::udp::packet::APacket::getSize() const
+auto ::packet::APacket::getSize() const
     -> ::std::size_t
 {
     return this->getMaxHeaderSize() + this->getBodySize();
 }
 
-auto ::udp::packet::APacket::getBodySize() const
+auto ::packet::APacket::getBodySize() const
     -> ::std::size_t
 {
     return static_cast<::std::size_t>(m_header.bodySize);
 }
 
-auto ::udp::packet::APacket::getHeader() const
+auto ::packet::APacket::getHeader() const
     -> const APacket::Header&
 {
     return m_header;
 }
 
-auto ::udp::packet::APacket::getType() const
+auto ::packet::APacket::getType() const
     -> APacket::Header::Type
 {
     return m_header.type;
 }
 
-auto ::udp::packet::APacket::getPosition() const
+auto ::packet::APacket::getPosition() const
     -> ::std::uint8_t
 {
     return m_header.packetPosition;
 }
 
-auto ::udp::packet::APacket::getPacketId() const
+auto ::packet::APacket::getPacketId() const
     -> ::std::uint8_t
 {
     return m_header.packetId;
 }
 
-auto ::udp::packet::APacket::isImportant() const
+auto ::packet::APacket::isImportant() const
     -> bool
 {
     return m_header.packetId != 0;
 }
 
-auto ::udp::packet::APacket::getMemoryAddress()
+auto ::packet::APacket::getMemoryAddress()
     -> void*
 {
     return this;
@@ -78,7 +78,7 @@ auto ::udp::packet::APacket::getMemoryAddress()
 
 // ------------------------------------------------------------------ debug
 
-void ::udp::packet::APacket::display(
+void ::packet::APacket::display(
     const char direction[2]
 ) const
 {
@@ -86,8 +86,8 @@ void ::udp::packet::APacket::display(
         << (int)this->getType() << ' '
         << (int)this->getPosition() << ' '
         << (int)this->getPacketId();
-    if (this->getType() == ::udp::packet::APacket::Header::Type::text) {
-        ::std::cout << ' ' << reinterpret_cast<const udp::packet::Text*>(this)->toString();
+    if (this->getType() == ::packet::APacket::Header::Type::text) {
+        ::std::cout << ' ' << reinterpret_cast<const packet::Text*>(this)->toString();
     }
     ::std::cout << '\n';
 }
@@ -96,7 +96,7 @@ void ::udp::packet::APacket::display(
 
 // ------------------------------------------------------------------ newId
 
-void ::udp::packet::APacket::assignNewId()
+void ::packet::APacket::assignNewId()
 {
     m_header.packetId = APacket::generatePacketId();
 }
@@ -105,7 +105,7 @@ void ::udp::packet::APacket::assignNewId()
 
 // ------------------------------------------------------------------ idGenerator
 
-auto ::udp::packet::APacket::generatePacketId()
+auto ::packet::APacket::generatePacketId()
     -> ::std::uint8_t
 {
     return ++APacket::Header::packetIdGenerator != 0

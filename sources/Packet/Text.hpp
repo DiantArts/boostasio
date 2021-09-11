@@ -1,20 +1,20 @@
 #pragma once
 
-#include <Udp/Packet/APacket.hpp>
+#include <Packet/APacket.hpp>
 
 
 
-namespace udp::packet {
+namespace packet {
 
 
 
 class Text
-    : public ::udp::APacket
+    : public ::APacket
 {
 
 public:
 
-    using Data = ::std::array<char, udp::APacket::getMaxSize() - udp::APacket::getMaxHeaderSize()>;
+    using Data = ::std::array<char, APacket::getMaxSize() - APacket::getMaxHeaderSize()>;
 
 
 
@@ -59,4 +59,4 @@ private:
 
 
 
-} // namespace udp::packet
+} // namespace packet

@@ -19,7 +19,8 @@ public:
             ping,
             confirmation,
             exit,
-            text
+            text,
+            syn
         };
         Header::Type type;
 

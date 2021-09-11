@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Udp/Packet/APacket.hpp>
+#include <Server/Udp/Connection.hpp>
 
 namespace udp::packet { class Text; }
 
@@ -30,40 +30,17 @@ public:
 
 
 
-    // ------------------------------------------------------------------ send
-
-    void send(
-        const ::udp::packet::Text& message,
-        ::boost::asio::ip::udp::endpoint endpoint
-    );
-
-    void send(
-        const ::udp::APacket& message,
-        ::boost::asio::ip::udp::endpoint endpoint
-    );
-
-    void reply(
-        const ::udp::APacket& message
-    );
-
-
-
     // ------------------------------------------------------------------ receive
 
-    void startReceive();
-
-    void handleReceive();
+    void handleReceive(
+        ::udp::APacket& message
+    );
 
 
 
 private:
 
-    ::boost::asio::io_context m_ioContext;
-    ::boost::asio::ip::udp::socket m_socket;
-    ::boost::asio::ip::udp::endpoint m_senderEndpoint;
-
-    static inline constexpr ::std::size_t bufferLength{ 254 };
-    ::std::array<::std::byte, Server::bufferLength> m_buffer;
+    ::udp::Connection m_clientsConnection;
 
 };
 

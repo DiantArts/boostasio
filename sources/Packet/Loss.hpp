@@ -17,16 +17,41 @@ public:
     // ------------------------------------------------------------------ *structors
 
     Loss(
-        const ::std::uint8_t lostPacketId
+        ::std::uint8_t lostPacketId
     );
 
     ~Loss();
 
 
 
+    // ------------------------------------------------------------------ comparison
+
+    auto operator<(::std::uint8_t id) const
+        -> bool;
+    auto operator<=(::std::uint8_t id) const
+        -> bool;
+    auto operator==(::std::uint8_t id) const
+        -> bool;
+    auto operator!=(::std::uint8_t id) const
+        -> bool;
+    auto operator>=(::std::uint8_t id) const
+        -> bool;
+    auto operator>(::std::uint8_t id) const
+        -> bool;
+
+
+
+    // ------------------------------------------------------------------ get
+
+    auto getLostPacketId() const
+        -> ::std::uint8_t;
+
+
+
 private:
 
     const ::std::uint8_t m_lostPacketId;
+    // const int m_lostPacketId;
 
 };
 

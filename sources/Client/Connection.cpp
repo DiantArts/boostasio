@@ -44,15 +44,16 @@ auto ::client::Connection::getLatency() const
 // ------------------------------------------------------------------ send
 
 void ::client::Connection::send(
-    const ::APacket& message
+    ::std::unique_ptr<::APacket>&& message
 )
 {
     // debug
     ::std::cout << '\r';
-    message.display("->");
+    message->display("->");
     ::std::cout << "Input: " << ::std::flush;
 
-    m_socket.send_to(::boost::asio::buffer(&message, message.getSize()), m_endpoint);
+    m_socket.send_to(::boost::asio::buffer(message.get(), message->getSize()), m_endpoint);
+    m_sentPackets.push(::std::move(message));
 }
 
 
@@ -97,25 +98,47 @@ void ::client::Connection::startReceiveImpl(
 
 void ::client::Connection::prehandleMessage()
 {
+    auto& message = *reinterpret_cast<::APacket*>(&m_buffer);
+
     // debug
     ::std::cout << '\r';
-    reinterpret_cast<::APacket*>(&m_buffer)->display("<-");
+    message.display("<-");
     ::std::cout << "Input: " << ::std::flush;
 
     // special interactions
-    switch (reinterpret_cast<::APacket*>(&m_buffer)->getHeader().type) {
-    case ::APacket::Header::Type::ping:
+    switch (message.getHeader().type) {
+    case ::APacket::Header::Type::packetLoss: {
+        // search for the lost packet in the most recent sent packet
+        auto& packetLost{ *reinterpret_cast<::packet::Loss*>(&m_buffer) };
+        while (!m_sentPackets.empty()) {
+            if (packetLost.getLostPacketId() == m_sentPackets.front()->getId()) {
+                m_sentPackets.front()->assignNewId();
+                this->send(::std::move(m_sentPackets.front()));
+                m_sentPackets.pop();
+                break;
+            }
+            m_sentPackets.pop();
+        }
+        break;
+
+    } case ::APacket::Header::Type::ping:
+
+        // compute the latency and confirm that the client is still connected to the server
         m_isPingValidated = true;
         m_latency = ::std::chrono::duration_cast<::std::chrono::milliseconds>(
             std::chrono::high_resolution_clock::now() - m_pingTimepoint
         ).count();
+
+        // clear the queue because we have the confirmation that no packet has been lost
+        std::queue<::std::unique_ptr<::APacket>>{}.swap(m_sentPackets);
+
         break;
     case ::APacket::Header::Type::error:
         ::std::cout << reinterpret_cast<::packet::Error*>(&m_buffer)->toString() << ::std::endl;
         break;
     default:
         // user defined behaviours
-        (*m_userReceiveFunc)(*reinterpret_cast<::packet::Error*>(&m_buffer));
+        (*m_userReceiveFunc)(message);
     }
 
     this->startReceiveImpl();
@@ -129,7 +152,7 @@ void ::client::Connection::maintainConnection()
 {
     do {
         m_isPingValidated = false;
-        this->send(::packet::Ping{});
+        this->send(::std::make_unique<::packet::Ping>());
         m_pingTimepoint = std::chrono::high_resolution_clock::now();
         ::std::this_thread::sleep_for(::std::chrono::milliseconds(m_pingFrequency));
     } while (m_isPingValidated && m_isRunning);

@@ -60,7 +60,7 @@ void ::server::Connection::startReceive(
     m_ioContext.run();
 }
 
-void ::Server::Connection::stopReceive()
+void ::server::Connection::stopReceive()
 {
     m_ioContext.stop();
 }
@@ -73,23 +73,52 @@ void ::server::Connection::startReceiveImpl()
         m_lastSenderEndpoint,
         ::boost::bind(
             &Connection::prehandleReceive,
-            this
+            this,
+            ::boost::asio::placeholders::error,
+            ::boost::asio::placeholders::bytes_transferred
         )
     );
 }
 
-void ::server::Connection::prehandleReceive()
+void ::server::Connection::prehandleReceive(
+    const boost::system::error_code& error,
+    size_t bytesTransferred
+)
 {
+    if (error) {
+        ::std::cout << "[ERROR] - " << error.message() << ::std::endl;
+        this->startReceiveImpl();
+        return;
+    }
+
+    auto& message = *reinterpret_cast<::APacket*>(&m_buffer);
+
     // display the received message
-    reinterpret_cast<::APacket*>(&m_buffer)->display("<-");
+    message.display("<-");
+
+    // packet loss check
+    if (message.getId() != m_nextPacketId) {
+        this->reply(::packet::Loss{ message.getId() });
+        ++m_nextPacketId;
+        return;
+    } else if (message.getId() == 5) {
+        this->reply(::packet::Loss{ message.getId() });
+        ++m_nextPacketId;
+        return;
+    }
+    if (m_nextPacketId == 255) {
+        m_nextPacketId = 1;
+    } else {
+        ++m_nextPacketId;
+    }
 
     // special interactions
-    if (reinterpret_cast<::APacket*>(&m_buffer)->getType() == ::APacket::Header::Type::ping) {
-        this->reply(*reinterpret_cast<APacket*>(&m_buffer));
+    if (message.getType() == ::APacket::Header::Type::ping) {
+        this->reply(message);
     }
 
     // user defined behaviours
-    (*m_userReceiveFunc)(*reinterpret_cast<packet::Error*>(&m_buffer));
+    (*m_userReceiveFunc)(message);
 
     // special interaction
     this->startReceiveImpl();

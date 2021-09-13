@@ -10,7 +10,7 @@
     const ::std::string& host,
     const ::std::string& port
 )
-    : m_connectionToServer{ host, port, 200 }
+    : m_connectionToServer{ host, port, 1000 }
 {}
 
 ::client::Client::~Client() = default;
@@ -40,11 +40,11 @@ void ::client::Client::startSend()
     ::std::getline(::std::cin, str);
     while (m_connectionToServer.isValid()) {
         if (str == "/exit") {
-            m_connectionToServer.send(::packet::Exit{});
+            m_connectionToServer.send(::std::make_unique<::packet::Exit>());
         } else if (str == "/ping") {
             ::std::cout << "Latency: " << m_connectionToServer.getLatency() << ::std::endl;
         } else {
-            m_connectionToServer.send(::packet::Text{ str });
+            m_connectionToServer.send(::std::make_unique<::packet::Text>(str));
         }
         ::std::getline(::std::cin, str);
     }

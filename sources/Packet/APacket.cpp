@@ -1,6 +1,7 @@
 #include <pch.hpp>
 #include <Packet/APacket.hpp>
 #include <Packet/Text.hpp>
+#include <Packet/Loss.hpp>
 
 
 
@@ -56,7 +57,7 @@ auto ::packet::APacket::getPosition() const
     return m_header.packetPosition;
 }
 
-auto ::packet::APacket::getPacketId() const
+auto ::packet::APacket::getId() const
     -> ::std::uint8_t
 {
     return m_header.packetId;
@@ -85,9 +86,11 @@ void ::packet::APacket::display(
     ::std::cout << direction << ' '
         << (int)this->getType() << ' '
         << (int)this->getPosition() << ' '
-        << (int)this->getPacketId();
+        << (int)this->getId();
     if (this->getType() == ::packet::APacket::Header::Type::text) {
-        ::std::cout << ' ' << reinterpret_cast<const packet::Text*>(this)->toString();
+        ::std::cout << ' ' << reinterpret_cast<const ::packet::Text*>(this)->toString();
+    } else if (this->getType() == ::packet::APacket::Header::Type::packetLoss) {
+        ::std::cout << ' ' << (int)reinterpret_cast<const ::packet::Loss*>(this)->getLostPacketId();
     }
     ::std::cout << '\n';
 }

@@ -20,7 +20,8 @@ public:
             confirmation,
             exit,
             text,
-            syn
+            syn,
+            packetLoss
         };
         Header::Type type;
 
@@ -92,7 +93,7 @@ public:
     [[ nodiscard ]] auto getPosition() const
         -> ::std::uint8_t;
 
-    [[ nodiscard ]] auto getPacketId() const
+    [[ nodiscard ]] auto getId() const
         -> ::std::uint8_t;
 
     [[ nodiscard ]] auto isImportant() const

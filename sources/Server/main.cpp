@@ -1,6 +1,7 @@
 #include <pch.hpp>
 #include <Server/Server.hpp>
 
+#include <Packet/Types.hpp>
 
 
 int main(int argc, char **argv)

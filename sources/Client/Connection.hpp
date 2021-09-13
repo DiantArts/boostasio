@@ -46,7 +46,7 @@ public:
     // ------------------------------------------------------------------ send
 
     void send(
-        const Connection::PacketType& message
+        ::std::unique_ptr<Connection::PacketType>&& message
     );
 
 
@@ -91,13 +91,15 @@ private:
     ::std::array<::std::byte, Connection::bufferLength> m_buffer;
     ::std::unique_ptr<::std::function<void(::APacket&)>> m_userReceiveFunc;
 
-
     // ------------------------------------------------------------------ ping
     ::std::chrono::time_point<std::chrono::system_clock> m_pingTimepoint; // allows to get the server latency
     ::std::size_t m_latency;
     ::std::atomic<bool> m_isPingValidated;
     ::std::atomic<bool> m_isRunning{ true };
     const ::std::size_t m_pingFrequency;
+
+    // ------------------------------------------------------------------ packetLoss
+    ::std::queue<::std::unique_ptr<::APacket>> m_sentPackets;
 
 };
 

@@ -8,7 +8,7 @@
 ::packet::Error::Error(
     Error::Type type
 )
-    : ::APacket{ ::APacket::Header::Type::error, 0, false, 0 }
+    : ::APacket{ ::packet::Header::Type::error, 0, false, 0 }
     , m_errorType{ type }
 {}
 

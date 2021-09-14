@@ -113,7 +113,7 @@ void ::server::Connection::prehandleReceive(
     }
 
     // special interactions
-    if (message.getType() == ::APacket::Header::Type::ping) {
+    if (message.getType() == ::packet::Header::Type::ping) {
         this->reply(message);
     }
 

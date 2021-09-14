@@ -8,7 +8,7 @@ namespace packet {
 
 
 
-class Syn
+class PingAck
     : public ::APacket
 {
 
@@ -16,9 +16,9 @@ public:
 
     // ------------------------------------------------------------------ *structors
 
-    Syn();
+    PingAck();
 
-    ~Syn();
+    ~PingAck();
 
 
 

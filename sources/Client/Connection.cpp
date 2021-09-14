@@ -107,7 +107,8 @@ void ::client::Connection::prehandleMessage()
 
     // special interactions
     switch (message.getHeader().type) {
-    case ::APacket::Header::Type::packetLoss: {
+    case ::packet::Header::Type::packetLoss: {
+
         // search for the lost packet in the most recent sent packet
         auto& packetLost{ *reinterpret_cast<::packet::Loss*>(&m_buffer) };
         while (!m_sentPackets.empty()) {
@@ -121,7 +122,7 @@ void ::client::Connection::prehandleMessage()
         }
         break;
 
-    } case ::APacket::Header::Type::ping:
+    } case ::packet::Header::Type::ping:
 
         // compute the latency and confirm that the client is still connected to the server
         m_isPingValidated = true;
@@ -133,7 +134,7 @@ void ::client::Connection::prehandleMessage()
         std::queue<::std::unique_ptr<::APacket>>{}.swap(m_sentPackets);
 
         break;
-    case ::APacket::Header::Type::error:
+    case ::packet::Header::Type::error:
         ::std::cout << reinterpret_cast<::packet::Error*>(&m_buffer)->toString() << ::std::endl;
         break;
     default:

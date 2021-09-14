@@ -6,7 +6,7 @@
 // ------------------------------------------------------------------ *structors
 
 ::packet::Exit::Exit()
-    : ::APacket{ ::APacket::Header::Type::exit, 0, true, 0 }
+    : ::APacket{ ::packet::Header::Type::exit, 0, true, 0 }
 {}
 
 ::packet::Exit::~Exit() = default;

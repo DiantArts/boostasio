@@ -8,7 +8,7 @@
 // ------------------------------------------------------------------ *structors
 
 ::packet::APacket::APacket(
-    APacket::Header::Type type,
+    packet::Header::Type type,
     ::std::size_t bodySize,
     const bool isImportant,
     const ::std::size_t position
@@ -40,13 +40,13 @@ auto ::packet::APacket::getBodySize() const
 }
 
 auto ::packet::APacket::getHeader() const
-    -> const APacket::Header&
+    -> const packet::Header&
 {
     return m_header;
 }
 
 auto ::packet::APacket::getType() const
-    -> APacket::Header::Type
+    -> packet::Header::Type
 {
     return m_header.type;
 }
@@ -87,9 +87,9 @@ void ::packet::APacket::display(
         << (int)this->getType() << ' '
         << (int)this->getPosition() << ' '
         << (int)this->getId();
-    if (this->getType() == ::packet::APacket::Header::Type::text) {
+    if (this->getType() == ::packet::Header::Type::text) {
         ::std::cout << ' ' << reinterpret_cast<const ::packet::Text*>(this)->toString();
-    } else if (this->getType() == ::packet::APacket::Header::Type::packetLoss) {
+    } else if (this->getType() == ::packet::Header::Type::packetLoss) {
         ::std::cout << ' ' << (int)reinterpret_cast<const ::packet::Loss*>(this)->getLostPacketId();
     }
     ::std::cout << '\n';
@@ -111,7 +111,7 @@ void ::packet::APacket::assignNewId()
 auto ::packet::APacket::generatePacketId()
     -> ::std::uint8_t
 {
-    return ++APacket::Header::packetIdGenerator != 0
-        ? APacket::Header::packetIdGenerator
-        : ++APacket::Header::packetIdGenerator;
+    return ++packet::Header::packetIdGenerator != 0
+        ? packet::Header::packetIdGenerator
+        : ++packet::Header::packetIdGenerator;
 }

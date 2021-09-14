@@ -6,7 +6,7 @@
 // ------------------------------------------------------------------ *structors
 
 ::packet::Ping::Ping()
-    : ::APacket{ ::APacket::Header::Type::ping, 0, true, 0 }
+    : ::APacket{ ::packet::Header::Type::ping, 0, true, 0 }
 {}
 
 ::packet::Ping::~Ping() = default;

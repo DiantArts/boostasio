@@ -8,7 +8,7 @@
 ::packet::Loss::Loss(
     const ::std::uint8_t lostPacketId
 )
-    : ::APacket{ ::APacket::Header::Type::packetLoss, sizeof(::std::uint8_t), false, 0 }
+    : ::APacket{ ::packet::Header::Type::packetLoss, sizeof(::std::uint8_t), false, 0 }
     , m_lostPacketId{ lostPacketId }
 {}
 

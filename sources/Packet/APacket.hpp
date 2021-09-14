@@ -4,6 +4,10 @@
 
 
 
+#include <Packet/Header.hpp>
+
+
+
 namespace packet {
 
 
@@ -12,36 +16,10 @@ class APacket {
 
 public:
 
-    struct Header {
-
-        enum class Type : ::std::uint8_t {
-            error = 0,
-            ping,
-            confirmation,
-            exit,
-            text,
-            syn,
-            packetLoss
-        };
-        Header::Type type;
-
-        static inline ::std::uint8_t packetIdGenerator{ 0 };
-        mutable ::std::uint8_t packetId; // 0 = not important, else, ID equal to last ID + 1
-
-        const ::std::uint8_t packetPosition; // position of the message in the multi messages range
-
-        const ::std::uint8_t bodySize;
-
-    };
-
-
-
-public:
-
     // ------------------------------------------------------------------ *structors
 
     APacket(
-        APacket::Header::Type type,
+        packet::Header::Type type,
         ::std::size_t bodySize,
         bool isImportant,
         const ::std::size_t position = 0
@@ -74,8 +52,8 @@ public:
     [[ nodiscard ]] static inline constexpr auto getHeaderSize()
         -> ::std::size_t
     {
-        static_assert(sizeof(APacket::Header) <= APacket::getMaxHeaderSize(), "APacket::Header too big");
-        return sizeof(APacket::Header);
+        static_assert(sizeof(packet::Header) <= APacket::getMaxHeaderSize(), "packet::Header too big");
+        return sizeof(packet::Header);
     }
 
     [[ nodiscard ]] auto getSize() const
@@ -85,10 +63,10 @@ public:
         -> ::std::size_t;
 
     [[ nodiscard ]] auto getHeader() const
-        -> const APacket::Header&;
+        -> const packet::Header&;
 
     [[ nodiscard ]] auto getType() const
-        -> APacket::Header::Type;
+        -> packet::Header::Type;
 
     [[ nodiscard ]] auto getPosition() const
         -> ::std::uint8_t;
@@ -120,7 +98,7 @@ public:
 
 protected:
 
-    const APacket::Header m_header;
+    const packet::Header m_header;
 
 
 
@@ -132,7 +110,6 @@ private:
         -> ::std::uint8_t;
 
 };
-
 
 
 

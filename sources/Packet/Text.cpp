@@ -8,7 +8,7 @@
 ::packet::Text::Text(
     const ::std::string& message
 )
-    : ::APacket{ ::APacket::Header::Type::text, message.size(), true, 0 }
+    : ::APacket{ ::packet::Header::Type::text, message.size(), true, 0 }
 {
     ::std::memmove(m_data.data(), message.data(), message.size());
 }
@@ -17,7 +17,7 @@
     const ::std::string& message,
     const ::std::size_t& position
 )
-    : ::APacket{ ::APacket::Header::Type::text, message.size(), true, position }
+    : ::APacket{ ::packet::Header::Type::text, message.size(), true, position }
 {
     ::std::memmove(m_data.data(), message.data(), message.size());
 }

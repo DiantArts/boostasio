@@ -3,9 +3,6 @@
 #include <Packet/APacket.hpp>
 
 
-namespace packet { class Text; }
-
-
 
 namespace client {
 

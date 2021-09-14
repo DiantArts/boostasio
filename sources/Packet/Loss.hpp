@@ -51,7 +51,6 @@ public:
 private:
 
     const ::std::uint8_t m_lostPacketId;
-    // const int m_lostPacketId;
 
 };
 

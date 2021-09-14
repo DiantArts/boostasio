@@ -2,8 +2,6 @@
 
 #include <Packet/APacket.hpp>
 
-namespace packet { class Text; }
-
 
 
 namespace server {
@@ -62,8 +60,8 @@ private:
 
     // ------------------------------------------------------------------ connection
     ::boost::asio::io_context m_ioContext;
-    ::boost::asio::ip::udp::socket m_socket;
     ::boost::asio::ip::udp::endpoint m_lastSenderEndpoint;
+    ::boost::asio::ip::udp::socket m_socket;
 
     // ------------------------------------------------------------------ receive
     ::std::unique_ptr<::std::function<void(::APacket&)>> m_userReceiveFunc;

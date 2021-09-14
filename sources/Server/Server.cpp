@@ -36,7 +36,7 @@ void ::server::Server::handleReceive(
 )
 {
     switch (message.getType()) {
-    case ::APacket::Header::Type::text:
+    case ::packet::Header::Type::text:
         message.assignNewId();
         m_clientsConnection.reply(message);
         break;

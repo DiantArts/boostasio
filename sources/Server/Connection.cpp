@@ -1,6 +1,7 @@
 #include <pch.hpp>
 #include <Server/Connection.hpp>
 #include <Packet/Types.hpp>
+#include <
 
 
 
@@ -13,6 +14,30 @@
 {}
 
 ::server::Connection::~Connection() = default;
+
+
+
+// ------------------------------------------------------------------ packets
+
+void ::server::Connection::clearSentPackets()
+{
+    std::queue<::std::unique_ptr<::APacket>>{}.swap(m_sentPackets);
+}
+
+auto ::server::Connection::isPacketSent(
+    ::std::uint8_t packetId
+) -> bool
+{
+    auto& packetLost{ *reinterpret_cast<::packet::Loss*>(&m_buffer) };
+    while (!m_sentPackets.empty()) {
+        if (packetLost.getLostPacketId() == packetId) {
+            m_sentPackets.pop();
+            return true;
+        }
+        m_sentPackets.pop();
+    }
+    return false;
+}
 
 
 

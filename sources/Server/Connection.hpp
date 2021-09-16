@@ -22,24 +22,62 @@ public:
 
 
 
+    // ------------------------------------------------------------------ packets
+
+    void clearSentPackets();
+
+    auto isPacketSent(
+        ::std::uint8_t packetId
+    ) -> bool;
+
+
+
     // ------------------------------------------------------------------ send
 
-    void send(
-        const ::APacket& message,
+    template <
+        typename MessageType
+    > void send(
+        ::boost::asio::ip::udp::endpoint endpoint,
+        auto&&... args
+    );
+
+    template <
+        typename MessageType
+    > void send(
         ::boost::asio::ip::udp::endpoint endpoint
+        MessageType&& message,
+    );
+
+    void send(
+        ::boost::asio::ip::udp::endpoint endpoint,
+        ::std::unique_ptr<::APacket>&& message
+    );
+
+
+
+    template <
+        typename MessageType
+    > void reply(
+        auto&&... args
+    );
+
+    template <
+        typename MessageType
+    > void reply(
+        MessageType&& message
     );
 
     void reply(
-        const ::APacket& message
+        ::std::unique_ptr<::APacket>&& message
     );
 
 
 
     // ------------------------------------------------------------------ receive
 
-    void startReceive(
-        ::std::function<void(::APacket&)>&& func
-    );
+    template <
+        auto function
+    > void startReceive();
 
     void stopReceive();
 
@@ -47,9 +85,13 @@ public:
 
 private:
 
-    void startReceiveImpl();
+    template <
+        auto function
+    > void startReceiveImpl();
 
-    void prehandleReceive(
+    template <
+        auto function
+    > void prehandleReceive(
         const boost::system::error_code& errorcode,
         size_t bytesTransferred
     );

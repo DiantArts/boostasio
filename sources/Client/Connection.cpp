@@ -153,7 +153,7 @@ void ::client::Connection::maintainConnection()
 {
     do {
         m_isPingValidated = false;
-        this->send(::std::make_unique<::packet::Ping>());
+        // this->send<::packet::Ping>();
         m_pingTimepoint = std::chrono::high_resolution_clock::now();
         ::std::this_thread::sleep_for(::std::chrono::milliseconds(m_pingFrequency));
     } while (m_isPingValidated && m_isRunning);

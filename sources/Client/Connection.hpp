@@ -40,11 +40,34 @@ public:
 
 
 
+    // ------------------------------------------------------------------ packets
+
+    void clearSentPackets();
+
+    auto isPacketSent(
+        ::std::uint8_t packetId
+    ) -> bool;
+
+
+
     // ------------------------------------------------------------------ send
 
-    void send(
-        ::std::unique_ptr<Connection::PacketType>&& message
+    template <
+        typename MessageType
+    > void send(
+        auto&&... args
     );
+
+    template <
+        typename MessageType
+    > void send(
+        MessageType&& message
+    );
+
+    void send(
+        ::std::unique_ptr<::APacket>&& message
+    );
+
 
 
 

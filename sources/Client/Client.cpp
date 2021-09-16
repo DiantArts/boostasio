@@ -33,18 +33,18 @@ void ::client::Client::run()
 
 // ------------------------------------------------------------------ send
 
-void ::client::Client::startSend()
+void ::client::Client::startSendLoop()
 {
     ::std::cout << "Input: " << ::std::flush;
     ::std::string str;
     ::std::getline(::std::cin, str);
     while (m_connectionToServer.isValid()) {
         if (str == "/exit") {
-            m_connectionToServer.send(::std::make_unique<::packet::Exit>());
+            // m_connectionToServer.send<::packet::Exit>();
         } else if (str == "/ping") {
             ::std::cout << "Latency: " << m_connectionToServer.getLatency() << ::std::endl;
         } else {
-            m_connectionToServer.send(::std::make_unique<::packet::Text>(str));
+            // m_connectionToServer.send<::packet::Text>(str);
         }
         ::std::getline(::std::cin, str);
     }

@@ -34,7 +34,7 @@ public:
 
     // ------------------------------------------------------------------ communication
 
-    void startSend();
+    void startSendLoop();
 
     void handleReceive(
         ::client::Connection::PacketType& message

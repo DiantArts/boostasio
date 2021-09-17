@@ -14,23 +14,6 @@ class Connection {
 
 public:
 
-    // ------------------------------------------------------------------ Client Infos
-
-    struct ClientInformations {
-        ::boost::asio::ip::udp::endpoint endpoint;
-        ::std::string name;
-        ::std::uint8_t nextPacketId{ 1 };
-
-        auto operator==(
-            const ::boost::asio::ip::udp::endpoint& other
-        ) const
-            -> bool;
-    };
-
-
-
-public:
-
     // ------------------------------------------------------------------ *structors
 
     Connection(
@@ -102,7 +85,7 @@ private:
     ::boost::asio::io_context m_ioContext;
     ::boost::asio::ip::udp::socket m_socket;
     ::boost::asio::ip::udp::endpoint m_lastSenderEndpoint;
-    ::std::vector<Connection::ClientInformations> m_connectedClients;
+    ::std::vector<Connection::ClientInformations> m_connectedClients; // room
 
     // ------------------------------------------------------------------ receive
     ::std::unique_ptr<::std::function<void(::APacket&)>> m_userReceiveFunc;

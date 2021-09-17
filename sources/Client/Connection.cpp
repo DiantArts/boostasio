@@ -9,6 +9,7 @@
 ::client::Connection::Connection(
     const ::std::string& host,
     const ::std::string& port,
+    const ::std::string& name,
     const ::std::size_t pingFrequencyAsMs
 )
     : m_endpoint{
@@ -19,6 +20,7 @@
     , m_pingFrequency{ pingFrequencyAsMs }
 {
     m_socket.open(::boost::asio::ip::udp::v4());
+    this->send<::packet::ConnectionRequest>(name);
 }
 
 ::client::Connection::~Connection() = default;

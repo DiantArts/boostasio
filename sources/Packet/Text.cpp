@@ -15,6 +15,16 @@
 
 ::packet::Text::Text(
     const ::std::string& message,
+    ::packet::Header::Type type,
+    bool isImportant
+)
+    : ::APacket{ type, message.size(), isImportant, 0 }
+{
+    ::std::memmove(m_data.data(), message.data(), message.size());
+}
+
+::packet::Text::Text(
+    const ::std::string& message,
     const ::std::size_t& position
 )
     : ::APacket{ ::packet::Header::Type::text, message.size(), true, position }

@@ -19,13 +19,13 @@ public:
     // ------------------------------------------------------------------ *structors
 
     APacket(
-        packet::Header::Type type,
+        ::packet::Header::Type type,
         ::std::size_t bodySize,
         bool isImportant,
         const ::std::size_t position = 0
     );
 
-    virtual ~APacket() = 0;
+    virtual ~APacket();
 
 
 

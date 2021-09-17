@@ -15,7 +15,8 @@ class Error
 public:
 
     enum class Type : uint8_t {
-        unknown = 0
+        unknown = 0,
+        alreadyConnected
     };
 
 
@@ -48,6 +49,7 @@ private:
 
     static inline constexpr char errorMessages[][256] = {
         "Unknown error type",
+        "Client already connected",
         "Failure"
     };
 };

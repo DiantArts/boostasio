@@ -28,10 +28,16 @@ public:
 
     Text(
         const ::std::string& message,
+        ::packet::Header::Type type,
+        bool isImportant
+    );
+
+    Text(
+        const ::std::string& message,
         const ::std::size_t& position
     );
 
-    ~Text();
+    virtual ~Text();
 
 
 

@@ -2,6 +2,8 @@
 
 #include <Packet/APacket.hpp>
 
+namespace packet{ class Text; }
+
 
 
 namespace server {
@@ -9,6 +11,23 @@ namespace server {
 
 
 class Connection {
+
+public:
+
+    // ------------------------------------------------------------------ Client Infos
+
+    struct ClientInformations {
+        ::boost::asio::ip::udp::endpoint endpoint;
+        ::std::string name;
+        ::std::uint8_t nextPacketId{ 1 };
+
+        auto operator==(
+            const ::boost::asio::ip::udp::endpoint& other
+        ) const
+            -> bool;
+    };
+
+
 
 public:
 
@@ -26,11 +45,29 @@ public:
 
     void send(
         const ::APacket& message,
-        ::boost::asio::ip::udp::endpoint endpoint
+        const ::boost::asio::ip::udp::endpoint& endpoint
+    );
+
+    template <
+        typename MessageType
+    > void send(
+        const ::boost::asio::ip::udp::endpoint& endpoint,
+        auto&&... args
+    );
+
+    void sendToChatRoom(
+        const ::packet::Text& message,
+        const ::std::string& senderName
     );
 
     void reply(
         const ::APacket& message
+    );
+
+    template <
+        typename MessageType
+    > void reply(
+        auto&&... args
     );
 
 
@@ -43,6 +80,9 @@ public:
 
     void stopReceive();
 
+    auto getLastSenderInformations()
+        -> ::server::Connection::ClientInformations&;
+
 
 
 private:
@@ -51,7 +91,7 @@ private:
 
     void prehandleReceive(
         const boost::system::error_code& errorcode,
-        size_t bytesTransferred
+        ::std::size_t bytesTransferred
     );
 
 
@@ -60,19 +100,19 @@ private:
 
     // ------------------------------------------------------------------ connection
     ::boost::asio::io_context m_ioContext;
-    ::boost::asio::ip::udp::endpoint m_lastSenderEndpoint;
     ::boost::asio::ip::udp::socket m_socket;
+    ::boost::asio::ip::udp::endpoint m_lastSenderEndpoint;
+    ::std::vector<Connection::ClientInformations> m_connectedClients;
 
     // ------------------------------------------------------------------ receive
     ::std::unique_ptr<::std::function<void(::APacket&)>> m_userReceiveFunc;
     static inline constexpr ::std::size_t bufferLength{ 254 };
     ::std::array<::std::byte, Connection::bufferLength> m_buffer;
 
-    // ------------------------------------------------------------------ tcp
-    ::std::uint8_t m_nextPacketId{ 1 };
-
 };
 
 
 
 } // namespace server
+
+#include <Server/Connection.impl.hpp>

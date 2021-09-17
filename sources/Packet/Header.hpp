@@ -14,8 +14,10 @@ struct Header {
         error = 0,
         ping,
         pingAck,
-        confirmation,
-        exit,
+        connect,
+        connectionNeeded,
+        connectionRequest,
+        disconnect,
         text,
         packetLoss
     };

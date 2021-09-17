@@ -23,6 +23,7 @@ public:
     Connection(
         const ::std::string& host,
         const ::std::string& port,
+        const ::std::string& name,
         const ::std::size_t pingFrequencyAsMs = 1000
     );
 
@@ -40,10 +41,16 @@ public:
 
 
 
-    // ------------------------------------------------------------------ send
+// ------------------------------------------------------------------ send
 
     void send(
-        ::std::unique_ptr<Connection::PacketType>&& message
+        ::std::unique_ptr<::APacket>&& message
+    );
+
+    template <
+        typename MessageType
+    > void send(
+        auto&&... args
     );
 
 
@@ -103,3 +110,5 @@ private:
 
 
 } // namespace client
+
+#include <Client/Connection.impl.hpp>

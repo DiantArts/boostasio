@@ -19,7 +19,8 @@ public:
 
     Client(
         const ::std::string& host,
-        const ::std::string& port
+        const ::std::string& port,
+        const ::std::string name
     );
 
     ~Client();

@@ -38,7 +38,9 @@ void ::server::Server::handleReceive(
     switch (message.getType()) {
     case ::packet::Header::Type::text:
         message.assignNewId();
-        m_clientsConnection.reply(message);
+        m_clientsConnection.sendToChatRoom(
+            reinterpret_cast<::packet::Text&>(message), m_clientsConnection.getLastSenderInformations().name
+        );
         break;
     default: break;
     }

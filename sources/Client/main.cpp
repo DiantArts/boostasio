@@ -10,7 +10,10 @@ int main(int argc, char **argv)
             std::cerr << "Usage: client <host> <port>" << std::endl;
             return EXIT_FAILURE;
         }
-        ::Client client(argv[1], "8080");
+        ::std::cout << "Choose a name: " << ::std::flush;
+        ::std::string name;
+        ::std::getline(::std::cin, name);
+        ::Client client(argv[1], "8080", name);
         client.run();
         ::std::cout << "> EXIT CLIENT <" << ::std::endl;
         return EXIT_SUCCESS;

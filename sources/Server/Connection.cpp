@@ -4,6 +4,18 @@
 
 
 
+// ------------------------------------------------------------------ Client Infos
+
+auto ::server::Connection::ClientInformations::operator==(
+    const ::boost::asio::ip::udp::endpoint& endpoint
+) const
+    -> bool
+{
+    return endpoint == this->endpoint;
+}
+
+
+
 // ------------------------------------------------------------------ *structors
 
 ::server::Connection::Connection(
@@ -20,7 +32,7 @@
 
 void ::server::Connection::send(
     const ::APacket& message,
-    ::boost::asio::ip::udp::endpoint endpoint
+    const ::boost::asio::ip::udp::endpoint& endpoint
 )
 {
     // display the message sent
@@ -35,6 +47,16 @@ void ::server::Connection::send(
             this
         )
     );
+}
+
+void ::server::Connection::sendToChatRoom(
+    const ::packet::Text& message,
+    const ::std::string& senderName
+)
+{
+    for (auto const& client : m_connectedClients) {
+        this->send<::packet::Text>(client.endpoint, "["s + senderName + "]:"s + message.toString());
+    }
 }
 
 void ::server::Connection::reply(
@@ -65,6 +87,17 @@ void ::server::Connection::stopReceive()
     m_ioContext.stop();
 }
 
+auto ::server::Connection::getLastSenderInformations()
+    -> ::server::Connection::ClientInformations&
+{
+    return *::std::ranges::find_if(
+        m_connectedClients,
+        [this](const ::server::Connection::ClientInformations& clientInformations){
+            return clientInformations.endpoint == m_lastSenderEndpoint;
+        }
+    );
+}
+
 void ::server::Connection::startReceiveImpl()
 {
     // actual receive
@@ -82,44 +115,71 @@ void ::server::Connection::startReceiveImpl()
 
 void ::server::Connection::prehandleReceive(
     const boost::system::error_code& error,
-    size_t bytesTransferred
+    ::std::size_t bytesTransferred
 )
 {
-    if (error) {
-        ::std::cout << "[ERROR] - " << error.message() << ::std::endl;
-        this->startReceiveImpl();
-        return;
+    { // handle errors
+        if (error) {
+            ::std::cout << "[ERROR] - " << error.message() << ::std::endl;
+            this->startReceiveImpl();
+            return;
+        }
     }
 
-    auto& message = *reinterpret_cast<::APacket*>(&m_buffer);
+    auto& message{ *reinterpret_cast<::APacket*>(&m_buffer) };
 
-    // display the received message
     message.display("<-");
 
-    // packet loss check
-    if (message.getId() != m_nextPacketId) {
-        this->reply(::packet::Loss{ message.getId() });
-        ++m_nextPacketId;
-        return;
-    } else if (message.getId() == 5) {
-        this->reply(::packet::Loss{ message.getId() });
-        ++m_nextPacketId;
-        return;
-    }
-    if (m_nextPacketId == 255) {
-        m_nextPacketId = 1;
-    } else {
-        ++m_nextPacketId;
+    { // handle connection
+        bool isAlreadyConnected{ false };
+        for (auto const& client : m_connectedClients) {
+            if (m_lastSenderEndpoint == client.endpoint) {
+                isAlreadyConnected = true;
+                break;
+            }
+        }
+        if (message.getType() == ::packet::Header::Type::connectionRequest) {
+            if (isAlreadyConnected) {
+                this->reply<::packet::Error>(::packet::Error::Type::alreadyConnected);
+            }
+            m_connectedClients.emplace_back(
+                m_lastSenderEndpoint, reinterpret_cast<::packet::ConnectionRequest*>(&m_buffer)->toString()
+            );
+            this->startReceiveImpl();
+            return;
+        }
+        if (!isAlreadyConnected) {
+            this->reply<::packet::ConnectionNeeded>();
+            return;
+        }
     }
 
-    // special interactions
-    if (message.getType() == ::packet::Header::Type::ping) {
-        this->reply(message);
+    auto& senderInformations{ this->getLastSenderInformations() };
+
+    { // handle packet loss
+        if (message.getId() != senderInformations.nextPacketId) {
+            ::std::cout << "packet lost" << ::std::endl;
+            this->reply(::packet::Loss{ message.getId() });
+            ++senderInformations.nextPacketId;
+            this->startReceiveImpl();
+            return;
+        }
+        if (senderInformations.nextPacketId == 255) {
+            senderInformations.nextPacketId = 1;
+        } else {
+            ++senderInformations.nextPacketId;
+        }
+    }
+
+    { // handle special interactions
+        if (message.getType() == ::packet::Header::Type::ping) {
+            this->reply(message);
+        }
     }
 
     // user defined behaviours
     (*m_userReceiveFunc)(message);
 
-    // special interaction
+    // start receiving again
     this->startReceiveImpl();
 }

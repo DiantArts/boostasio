@@ -4,9 +4,25 @@
 
 
 
+// ------------------------------------------------------------------ Client Infos
+
+auto ::server::Room::ClientInformations::operator==(
+    const ::boost::asio::ip::udp::endpoint& endpoint
+) const
+    -> bool
+{
+    return endpoint == this->endpoint;
+}
+
+
+
 // ------------------------------------------------------------------ *structors
 
-server::Room::Room() = default;
+server::Room::Room(
+    ::boost::asio::ip::udp::socket& socket
+)
+    : ::server::Buffer{ socket }
+{}
 
 server::Room::~Room() = default;
 
@@ -14,35 +30,73 @@ server::Room::~Room() = default;
 
 // ------------------------------------------------------------------ get
 
-auto ::server::Room::get{
+auto ::server::Room::get(
     const ::boost::asio::ip::udp::endpoint& clientEndpoint
-} const
+) const
     -> Room::ClientInformations
 {
     auto it{
         ::std::ranges::find_if(
-            m_connectedClients,
+            m_clients,
             [
                 &clientEndpoint
             ](
-                const ::server::Connection::ClientInformations& clientInformations
+                const Room::ClientInformations& clientInformations
             ){
                 return clientInformations.endpoint == clientEndpoint;
             }
         )
     };
-    if (it == m_connectedClients.end()) {
-        throw ::std::runtime_error("trying to get a client not connected to the room")
+    if (it == m_clients.end()) {
+        throw ::std::runtime_error("trying to get a client not connected to the room");
     }
     return *it;
 }
 
-auto ::server::Room::operator[]{
+auto ::server::Room::operator[](
     const ::boost::asio::ip::udp::endpoint& clientEndpoint
-} const
+) const
     -> Room::ClientInformations
 {
-    return this->git(clientEndpoint);
+    return this->get(clientEndpoint);
+}
+
+
+
+auto ::server::Room::begin()
+    -> Room::ContainerType::iterator
+{
+    return m_clients.begin();
+}
+
+auto ::server::Room::end()
+    -> Room::ContainerType::iterator
+{
+    return m_clients.end();
+}
+
+auto ::server::Room::begin() const
+    -> Room::ContainerType::const_iterator
+{
+    return m_clients.begin();
+}
+
+auto ::server::Room::end() const
+    -> Room::ContainerType::const_iterator
+{
+    return m_clients.end();
+}
+
+auto ::server::Room::cbegin() const
+    -> Room::ContainerType::const_iterator
+{
+    return m_clients.cbegin();
+}
+
+auto ::server::Room::cend() const
+    -> Room::ContainerType::const_iterator
+{
+    return m_clients.cend();
 }
 
 
@@ -56,59 +110,52 @@ auto ::server::Room::isConnected(
 {
     auto it{
         ::std::ranges::find_if(
-            m_connectedClients,
+            m_clients,
             [
                 &clientEndpoint
             ](
-                const ::server::Connection::ClientInformations& clientInformations
+                const ::server::Room::ClientInformations& clientInformations
             ){
                 return clientInformations.endpoint == clientEndpoint;
             }
         )
     };
-    return it != m_connectedClients.end();
-}
-
-
-
-// ------------------------------------------------------------------ send
-
-void ::server::Room::send(
-    const ::APacket& message
-)
-{
-    for (auto const& client : m_connectedClients) {
-        this->send<::packet::Text>(message.toString());
-    }
-}
-
-void ::server::Room::operator<<(
-    const ::APacket& message
-)
-{
-    this->send(message);
+    return it != m_clients.end();
 }
 
 
 
 // ------------------------------------------------------------------ handle things
 
-auto ::server::Room::handleConnection(
-    const ::boost::asio::ip::udp::endpoint& clientEndpoint,
-    const ::packet& request
+auto ::server::Room::handleErrors(
+    const boost::system::error_code& error,
+    ::std::size_t bytesTransferred
 ) -> bool
 {
-    auto isConnected{ this->isConnected() };
+    auto& message{ *reinterpret_cast<::APacket*>(&m_buffer) };
+    if (error) {
+        ::std::cout << "[ERROR] - " << error.message() << ::std::endl;
+        return false;
+    }
+    message.display("<-");
+    return true;
+}
 
-    if (message.getType() == ::packet::Header::Type::connectionRequest) {
+auto ::server::Room::handleConnection()
+    -> bool
+{
+    auto& request{ *reinterpret_cast<::APacket*>(&m_buffer) };
+    auto isConnected{ this->isConnected(m_lastSenderEndpoint) };
+
+    if (request.getType() == ::packet::Header::Type::connectionRequest) {
         if (isConnected) {
-            this->send<::packet::Error>(clientEndpoint, ::packet::Error::Type::alreadyConnected);
+            this->sendTo<::packet::Error>(m_lastSenderEndpoint, ::packet::Error::Type::alreadyConnected);
             return false;
         } else {
-            m_connectedClients.emplace_back(
+            m_clients.emplace_back(
                 m_lastSenderEndpoint, reinterpret_cast<::packet::ConnectionRequest*>(&request)->toString()
             );
-            return true;
+            return false;
         }
     }
     if (!isConnected) {
@@ -118,15 +165,13 @@ auto ::server::Room::handleConnection(
     return true;
 }
 
-auto ::server::Room::handlePacketLoss(
-    const ::boost::asio::ip::udp::endpoint& clientEndpoint,
-    const ::packet& message
-) -> bool
+auto ::server::Room::handlePacketLoss()
+    -> bool
 {
-    auto& senderInformations{ this->get[clientEndpoint] };
+    auto& message{ *reinterpret_cast<::APacket*>(&m_buffer) };
+    auto senderInformations{ this->get(m_lastSenderEndpoint) };
     if (message.getId() != senderInformations.nextPacketId) {
-        ::std::cout << "packet lost" << ::std::endl;
-        this->send<::packet::Loss>(clientEndpoint, message.getId());
+        this->sendTo<::packet::Loss>(m_lastSenderEndpoint, message.getId());
         ++senderInformations.nextPacketId;
         return false;
     }
@@ -136,4 +181,15 @@ auto ::server::Room::handlePacketLoss(
         ++senderInformations.nextPacketId;
     }
     return true;
+}
+
+auto ::server::Room::handleReceiveRoutine(
+    const boost::system::error_code& error,
+    ::std::size_t bytesTransferred
+) -> bool
+{
+    return
+        this->handleErrors(error, bytesTransferred) ||
+        this->handleConnection() ||
+        this->handlePacketLoss();
 }

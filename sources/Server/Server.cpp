@@ -9,7 +9,8 @@
 ::server::Server::Server(
     const int port
 )
-    : m_clientsConnection{ port }
+    : m_socket{ m_ioContext, ::boost::asio::ip::udp::endpoint(::boost::asio::ip::udp::v4(), port) }
+    , m_rooms{ m_socket }
 {}
 
 ::server::Server::~Server() = default;
@@ -21,9 +22,8 @@
 void ::server::Server::run()
 {
     ::std::cout << "> SERVER START <" << ::std::endl;
-    m_clientsConnection.startReceive(
-        ::boost::bind(&Server::handleReceive, this, ::boost::placeholders::_1)
-    );
+
+    m_rooms.startReceive<&Server::handleReceive>(*this);
     ::std::cout << "> EXIT SERVER <" << ::std::endl;
 }
 
@@ -38,9 +38,10 @@ void ::server::Server::handleReceive(
     switch (message.getType()) {
     case ::packet::Header::Type::text:
         message.assignNewId();
-        m_clientsConnection.sendToChatRoom(
-            reinterpret_cast<::packet::Text&>(message), m_clientsConnection.getLastSenderInformations().name
-        );
+        // TODO: send to chat the all room
+        // m_rooms.send(
+            // reinterpret_cast<::packet::Text&>(message), m_rooms.getLastSenderInformations().name
+        // );
         break;
     default: break;
     }

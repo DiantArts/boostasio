@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Packet/APacket.hpp>
+#include <Server/Buffer.hpp>
 
 namespace packet{ class ConnectionRequest; }
 
@@ -10,7 +11,9 @@ namespace server {
 
 
 
-class Room {
+class Room
+    : public server::Buffer
+{
 
 public:
 
@@ -28,13 +31,17 @@ public:
             -> bool;
     };
 
+    using ContainerType = ::std::vector<Room::ClientInformations>;
+
 
 
 public:
 
     // ------------------------------------------------------------------ *structors
 
-    Room();
+    Room(
+        ::boost::asio::ip::udp::socket& socket
+    );
 
     ~Room();
 
@@ -42,15 +49,35 @@ public:
 
     // ------------------------------------------------------------------ get
 
-    auto get{
+    auto get(
         const ::boost::asio::ip::udp::endpoint& clientEndpoint
-    } const
+    ) const
         -> Room::ClientInformations;
 
-    auto operator[]{
+    auto operator[](
         const ::boost::asio::ip::udp::endpoint& clientEndpoint
-    } const
+    ) const
         -> Room::ClientInformations;
+
+
+
+    auto begin()
+        -> Room::ContainerType::iterator;
+
+    auto end()
+        -> Room::ContainerType::iterator;
+
+    auto begin() const
+        -> Room::ContainerType::const_iterator;
+
+    auto end() const
+        -> Room::ContainerType::const_iterator;
+
+    auto cbegin() const
+        -> Room::ContainerType::const_iterator;
+
+    auto cend() const
+        -> Room::ContainerType::const_iterator;
 
 
 
@@ -63,31 +90,36 @@ public:
 
 
 
-    // ------------------------------------------------------------------ send
+    // ------------------------------------------------------------------ handle things
 
-    void send(
-        const ::APacket& message
-    );
-
-    void operator<<(
-        const ::APacket& message
-    );
+    virtual auto handleReceiveRoutine(
+        const boost::system::error_code& error,
+        ::std::size_t bytesTransferred
+    ) -> bool
+        override;
 
 
+private:
 
     // ------------------------------------------------------------------ handle things
 
-    auto connect(
-        const ::boost::asio::ip::udp::endpoint& clientEndpoint,
-        const ::packet& request
+    auto handleErrors(
+        const boost::system::error_code& error,
+        ::std::size_t bytesTransferred
     ) -> bool;
 
+    auto handleConnection()
+        -> bool;
+
+    auto handlePacketLoss()
+        -> bool;
 
 
 
 private:
 
-    ::std::vector<Room::ClientInformations> m_connectedClients;
+    Room::ContainerType m_clients;
+
 
 };
 

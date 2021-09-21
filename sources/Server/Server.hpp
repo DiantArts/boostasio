@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Server/Connection.hpp>
+#include <Server/Room.hpp>
 
 
 
@@ -38,7 +38,10 @@ public:
 
 private:
 
-    ::server::Connection m_clientsConnection;
+    ::boost::asio::io_context m_ioContext;
+    ::boost::asio::ip::udp::socket m_socket;
+    ::server::Room m_rooms;
+    // ::std::vector<Buffer::ClientInformations> m_connectedClients; // TODO: multi rooms
 
 };
 

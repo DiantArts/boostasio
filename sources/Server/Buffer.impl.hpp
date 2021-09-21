@@ -114,6 +114,7 @@ template <
             ::boost::asio::placeholders::bytes_transferred
         )
     );
+    DEBUG_FUNC;
 }
 
 template <
@@ -125,13 +126,12 @@ template <
 )
 {
     auto& message{ *reinterpret_cast<::APacket*>(&m_buffer) };
-    if (this->handleReceiveRoutine(error, bytesTransferred)) {
-        // do nothing
+    if (!this->handleReceiveRoutine(error, bytesTransferred)) {
     } else if (message.getType() == ::packet::Header::Type::ping) {
         this->reply(message);
+        DEBUG_MSG("ping");
     } else {
         (server.*function)(message); // user defined behaviours
     }
-    // this->startReceive<Class, function>(server); // start receiving again
     this->startReceive<function>(server); // start receiving again
 }

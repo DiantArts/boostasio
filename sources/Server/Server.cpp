@@ -24,6 +24,7 @@ void ::server::Server::run()
     ::std::cout << "> SERVER START <" << ::std::endl;
 
     m_rooms.startReceive<&Server::handleReceive>(*this);
+    m_ioContext.run();
     ::std::cout << "> EXIT SERVER <" << ::std::endl;
 }
 

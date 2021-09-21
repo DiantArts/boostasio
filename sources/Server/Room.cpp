@@ -32,8 +32,30 @@ server::Room::~Room() = default;
 
 auto ::server::Room::get(
     const ::boost::asio::ip::udp::endpoint& clientEndpoint
+) -> Room::ClientInformations&
+{
+    auto it{
+        ::std::ranges::find_if(
+            m_clients,
+            [
+                &clientEndpoint
+            ](
+                const Room::ClientInformations& clientInformations
+            ){
+                return clientInformations.endpoint == clientEndpoint;
+            }
+        )
+    };
+    if (it == m_clients.end()) {
+        throw ::std::runtime_error("trying to get a client not connected to the room");
+    }
+    return *it;
+}
+
+auto ::server::Room::get(
+    const ::boost::asio::ip::udp::endpoint& clientEndpoint
 ) const
-    -> Room::ClientInformations
+    -> const Room::ClientInformations&
 {
     auto it{
         ::std::ranges::find_if(
@@ -55,8 +77,15 @@ auto ::server::Room::get(
 
 auto ::server::Room::operator[](
     const ::boost::asio::ip::udp::endpoint& clientEndpoint
+) -> Room::ClientInformations&
+{
+    return this->get(clientEndpoint);
+}
+
+auto ::server::Room::operator[](
+    const ::boost::asio::ip::udp::endpoint& clientEndpoint
 ) const
-    -> Room::ClientInformations
+    -> const Room::ClientInformations&
 {
     return this->get(clientEndpoint);
 }
@@ -150,18 +179,22 @@ auto ::server::Room::handleConnection()
     if (request.getType() == ::packet::Header::Type::connectionRequest) {
         if (isConnected) {
             this->sendTo<::packet::Error>(m_lastSenderEndpoint, ::packet::Error::Type::alreadyConnected);
+            DEBUG_MSG("already connected");
             return false;
         } else {
             m_clients.emplace_back(
                 m_lastSenderEndpoint, reinterpret_cast<::packet::ConnectionRequest*>(&request)->toString()
             );
+            DEBUG_MSG("connection accepted, no reply needed");
             return false;
         }
     }
     if (!isConnected) {
         this->reply<::packet::ConnectionNeeded>();
+        DEBUG_MSG("connection needed");
         return false;
     }
+    DEBUG_MSG("connection handled");
     return true;
 }
 
@@ -169,9 +202,11 @@ auto ::server::Room::handlePacketLoss()
     -> bool
 {
     auto& message{ *reinterpret_cast<::APacket*>(&m_buffer) };
-    auto senderInformations{ this->get(m_lastSenderEndpoint) };
+    auto& senderInformations{ this->get(m_lastSenderEndpoint) };
     if (message.getId() != senderInformations.nextPacketId) {
         this->sendTo<::packet::Loss>(m_lastSenderEndpoint, message.getId());
+        DEBUG_MSG("packet lost, supposed packet: " << (int)senderInformations.nextPacketId
+                << " got: " << (int)message.getId());
         ++senderInformations.nextPacketId;
         return false;
     }
@@ -180,6 +215,7 @@ auto ::server::Room::handlePacketLoss()
     } else {
         ++senderInformations.nextPacketId;
     }
+    DEBUG_MSG("no packet loss");
     return true;
 }
 
@@ -189,7 +225,7 @@ auto ::server::Room::handleReceiveRoutine(
 ) -> bool
 {
     return
-        this->handleErrors(error, bytesTransferred) ||
-        this->handleConnection() ||
+        this->handleErrors(error, bytesTransferred) &&
+        this->handleConnection() &&
         this->handlePacketLoss();
 }

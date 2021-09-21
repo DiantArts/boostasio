@@ -51,13 +51,21 @@ public:
 
     auto get(
         const ::boost::asio::ip::udp::endpoint& clientEndpoint
+    ) -> Room::ClientInformations&;
+
+    auto get(
+        const ::boost::asio::ip::udp::endpoint& clientEndpoint
     ) const
-        -> Room::ClientInformations;
+        -> const Room::ClientInformations&;
+
+    auto operator[](
+        const ::boost::asio::ip::udp::endpoint& clientEndpoint
+    ) -> Room::ClientInformations&;
 
     auto operator[](
         const ::boost::asio::ip::udp::endpoint& clientEndpoint
     ) const
-        -> Room::ClientInformations;
+        -> const Room::ClientInformations&;
 
 
 
